@@ -208,7 +208,7 @@ export class chatgpt extends plugin {
     this.toggleMode = toggleMode
     this.reply = async (msg, quote, data) => {
       if (!Config.enableMd) {
-        const delayTime = this.calculateDynamicDelayTime(input);
+        const delayTime = this.calculateDynamicDelayTime(msg);
         await this.delay(delayTime); // 同步延迟的模拟
         return e.reply(msg, quote, data)
       }
