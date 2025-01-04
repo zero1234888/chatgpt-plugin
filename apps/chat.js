@@ -503,7 +503,7 @@ export class chatgpt extends plugin {
    */
   async chatgpt (e) {
     let msg = e.msg
-    let prompt
+    let prompt = msg.trim()
     let forcePictureMode = false
     if (this.toggleMode === 'at') {
       if (!msg || e.msg?.startsWith('#')) {
@@ -522,8 +522,7 @@ export class chatgpt extends plugin {
         if ((e.atme || e.atBot || (e.at === e.self_id))) {
           atme = true
         }
-
-        prompt = msg.trim()
+        
         let me = this.e.bot.gml.get(e.group_id).get(getUin(e)) || {}
         let nickname = me.nickname
         if(prompt.includes(nickname)){
