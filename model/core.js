@@ -74,7 +74,7 @@ async function handleSystem (e, system) {
       let opt = {}
       opt.groupId = e.group_id
       opt.qq = e.sender.user_id
-      opt.nickname = e.sender.card
+      opt.nickname = e.sender.card || e.sender.nickname
       opt.groupName = e.group.name || e.group_name
       opt.botName = e.isGroup ? (e.group.pickMember(getUin(e)).card || e.group.pickMember(getUin(e)).nickname) : e.bot.nickname
       let master = (await getMasterQQ())[0]
@@ -91,25 +91,17 @@ async function handleSystem (e, system) {
       const groupContextTip = Config.groupContextTip
       system = system.replaceAll(namePlaceholder, opt.botName || defaultBotName) +
         ((opt.groupId) ? groupContextTip : '')
-      system += 'Attention, you are currently chatting in a qq group, then one who asks you now is' + `${opt.nickname}(${opt.qq})。`
-      system += `the group name is ${opt.groupName}, group id is ${opt.groupId}。`
-      if (opt.botName) {
-        system += `Your nickname is ${opt.botName} in the group,`
-      }
-      if (chats) {
-        system += 'There is the conversation history in the group, you must chat according to the conversation history context"'
-        system += chats
-          .map(chat => {
-            let sender = chat.sender || {}
-            // if (sender.user_id === e.bot.uin && chat.raw_message.startsWith('建议的回复')) {
-            if (chat.raw_message.startsWith('建议的回复')) {
-              // 建议的回复太容易污染设定导致对话太固定跑偏了
-              return ''
-            }
-            return `【${sender.card || sender.nickname}】(qq：${sender.user_id}, ${roleMap[sender.role] || 'normal user'}，${sender.area ? 'from ' + sender.area + ', ' : ''} ${sender.age} years old, 群头衔：${sender.title}, gender: ${sender.sex}, time：${formatDate(new Date(chat.time * 1000))}, messageId: ${chat.message_id}) 说：${chat.raw_message}`
-          })
-          .join('\n')
-      }
+
+      system += `你的名字是“${opt.botName}”，你在一个qq群里，群号是${opt.groupId},当前和你说话的人群名片是${opt.nickname}, qq号是${opt.qq}, 请你结合用户的发言，本次聊天记录，以及历史聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨，不要讨论过于久远的话题, 不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。` +
+          candidate +
+          '以下是新增的聊天记录:' + chats
+              .map(chat => {
+                let sender = chat.sender || chat || {}
+                return `${sender.card || sender.nickname}(${sender.user_id}) ：${chat.raw_message}`
+              })
+              .join('\n') +
+          `\n你的回复应该尽可能简练，像人类一样随意，不要附加任何奇怪的东西，如聊天记录的格式（比如${Config.assistantLabel}：），禁止重复聊天记录。`
+
     } catch (err) {
       if (e.isGroup) {
         logger.warn('获取群聊聊天记录失败，本次对话不携带聊天记录', err)
@@ -810,19 +802,19 @@ class Core {
         let botName = e.isGroup ? (e.group.pickMember(getUin(e)).card || e.group.pickMember(getUin(e)).nickname) : e.bot.nickname
         system = system.replaceAll(namePlaceholder, botName || defaultBotName) +
           ((Config.enableGroupContext && e.group_id) ? groupContextTip : '')
-        system += 'Attention, you are currently chatting in a qq group, then one who asks you now is' + `${e.sender.card || e.sender.nickname}(${e.sender.user_id}).`
-        system += `the group name is ${e.group.name || e.group_name}, group id is ${e.group_id}.`
-        system += `Your nickname is ${botName} in the group,`
-        if (chats) {
-          system += 'There is the conversation history in the group, you must chat according to the conversation history context"'
-          system += chats
-            .map(chat => {
-              let sender = chat.sender || {}
-              return `【${sender.card || sender.nickname}】(qq：${sender.user_id}, ${roleMap[sender.role] || 'normal user'}，${sender.area ? 'from ' + sender.area + ', ' : ''} ${sender.age} years old, 群头衔：${sender.title}, gender: ${sender.sex}, time：${formatDate(new Date(chat.time * 1000))}, messageId: ${chat.message_id}) 说：${chat.raw_message}`
-            })
-            .join('\n')
-        }
+
+        system += `你的名字是“${botName}”，你在一个qq群里，群号是${e.group_id},当前和你说话的人群名片是${e.sender.card || e.sender.nickname}, qq号是${e.sender.user_id}, 请你结合用户的发言，本次聊天记录，以及历史聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨，不要讨论过于久远的话题, 不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。` +
+            candidate +
+            '以下是新增的聊天记录:' + chats
+                .map(chat => {
+                  let sender = chat.sender || chat || {}
+                  return `${sender.card || sender.nickname}(${sender.user_id}) ：${chat.raw_message}`
+                })
+                .join('\n') +
+            `\n你的回复应该尽可能简练，像人类一样随意，不要附加任何奇怪的东西，如聊天记录的格式（比如${Config.assistantLabel}：），禁止重复聊天记录。`
       }
+
+
       if (Config.enableChatSuno) {
         system += 'If I ask you to generate music or write songs, you need to reply with information suitable for Suno to generate music. Please use keywords such as Verse, Chorus, Bridge, Outro, and End to segment the lyrics, such as [Verse 1], The returned message is in JSON format, with a structure of ```json{"option": "Suno", "tags": "style", "title": "title of the song", "lyrics": "lyrics"}```.'
       }

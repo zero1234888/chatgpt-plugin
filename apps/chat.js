@@ -208,6 +208,8 @@ export class chatgpt extends plugin {
     this.toggleMode = toggleMode
     this.reply = async (msg, quote, data) => {
       if (!Config.enableMd) {
+        const delayTime = this.calculateDynamicDelayTime(input);
+        await this.delay(delayTime); // 同步延迟的模拟
         return e.reply(msg, quote, data)
       }
       let handler = e.runtime?.handler || {}
@@ -226,6 +228,25 @@ export class chatgpt extends plugin {
 
       return e.reply(msg, quote, data)
     }
+  }
+
+  async calculateDynamicDelayTime(input) {
+    const minDelay = 1000; // 最短 1 秒
+    const maxDelay = 5000; // 最长 5 秒
+    const baselineLength = 100; // 基准字符长度
+
+    const length = input.length;
+
+    // 超过基准长度时取最大延迟，否则按比例计算
+    const delay = length >= baselineLength
+        ? maxDelay
+        : minDelay + ((maxDelay - minDelay) * (length / baselineLength));
+
+    return Math.round(delay);
+  }
+
+  async delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**
@@ -488,15 +509,37 @@ export class chatgpt extends plugin {
       if (!msg || e.msg?.startsWith('#')) {
         return false
       }
-      if ((e.isGroup || e.group_id) && !(e.atme || e.atBot || (e.at === e.self_id))) {
-        return false
+
+      if(e.isGroup || e.group_id) {
+        let atme = false
+        let replys = e.message.filter(m => m.type === 'reply')
+        if (replys.length > 0) {
+          let replyMsg = await e.group.getChatHistory(replys[0].id, 1)
+          if (replyMsg[0].user_id === getUin(e)) {
+            atme = true
+          }
+        }
+        if ((e.atme || e.atBot || (e.at === e.self_id))) {
+          atme = true
+        }
+
+        prompt = msg.trim()
+        let me = this.e.bot.gml.get(e.group_id).get(getUin(e)) || {}
+        let nickname = me.nickname
+        if(prompt.includes(nickname)){
+          atme = true;
+        }
+
+        if (!atme) {
+          return false
+        }
       }
       if (e.user_id == getUin(e)) return false
-      prompt = msg.trim()
+
       try {
         if (e.isGroup) {
           let mm = this.e.bot.gml
-          let me = mm.get(getUin(e)) || {}
+          let me = mm.get(e.group_id).get(getUin(e)) || {}
           let card = me.card
           let nickname = me.nickname
           if (nickname && card) {
