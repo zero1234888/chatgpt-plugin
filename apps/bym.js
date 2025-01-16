@@ -18,6 +18,7 @@ import { KickOutTool } from '../utils/tools/KickOutTool.js'
 import { SetTitleTool } from '../utils/tools/SetTitleTool.js'
 import { SerpTool } from '../utils/tools/SerpTool.js'
 import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessageToSpecificGroupOrUserTool.js'
+import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 
 export class bym extends plugin {
   constructor () {
@@ -101,7 +102,7 @@ export class bym extends plugin {
       let client = new CustomGoogleGeminiClient({
         e,
         userId: e.sender.user_id,
-        key: Config.geminiKey,
+        key: Config.getGeminiKey(),
         model: Config.geminiModel,
         baseUrl: Config.geminiBaseUrl,
         debug: Config.debug
@@ -170,44 +171,4 @@ export class bym extends plugin {
     }
     return false
   }
-}
-
-/**
- * 过滤
- * @param msg
- */
-function filterResponseChunk (msg) {
-  if (!msg || typeof msg !== 'string') {
-    return false
-  }
-  if (!msg.trim()) {
-    return false
-  }
-  if (msg.trim() === '```') {
-    return false
-  }
-  if (msg.trim() === '<EMPTY>') {
-    return false
-  }
-  return msg
-}
-
-function customSplitRegex (text, regex, limit) {
-  const result = []
-  let match
-  let lastIndex = 0
-  const globalRegex = new RegExp(regex, 'g')
-
-  while ((match = globalRegex.exec(text)) !== null) {
-    if (result.length < limit - 1) {
-      result.push(text.slice(lastIndex, match.index))
-      lastIndex = match.index + match[0].length
-    } else {
-      break
-    }
-  }
-
-  // 添加剩余部分
-  result.push(text.slice(lastIndex))
-  return result
 }
