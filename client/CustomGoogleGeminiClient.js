@@ -116,26 +116,26 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
   async sendMessage (text, opt = {}) {
     let history = await this.getHistory(opt.parentMessageId)
     let systemMessage = opt.system
-    if (systemMessage) {
-      history = history.reverse()
-      history.push({
-        role: 'model',
-        parts: [
-          {
-            text: 'ok'
-          }
-        ]
-      })
-      history.push({
-        role: 'user',
-        parts: [
-          {
-            text: systemMessage
-          }
-        ]
-      })
-      history = history.reverse()
-    }
+    // if (systemMessage) {
+    //   history = history.reverse()
+    //   history.push({
+    //     role: 'model',
+    //     parts: [
+    //       {
+    //         text: 'ok'
+    //       }
+    //     ]
+    //   })
+    //   history.push({
+    //     role: 'user',
+    //     parts: [
+    //       {
+    //         text: systemMessage
+    //       }
+    //     ]
+    //   })
+    //   history = history.reverse()
+    // }
     const idThis = crypto.randomUUID()
     const idModel = crypto.randomUUID()
     const thisMessage = opt.functionResponse
@@ -149,7 +149,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         }
       : {
           role: 'user',
-          parts: [{ text }],
+          parts: text ? [{ text }] : [],
           id: idThis,
           parentMessageId: opt.parentMessageId || undefined
         }
@@ -198,6 +198,13 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         topK: opt.tokK || 16
       },
       tools: []
+    }
+    if (systemMessage) {
+      body.system_instruction = {
+        parts: {
+          text: systemMessage
+        }
+      }
     }
     if (this.tools?.length > 0) {
       body.tools.push({
