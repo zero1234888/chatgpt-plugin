@@ -503,7 +503,7 @@ export class chatgpt extends plugin {
    */
   async chatgpt (e) {
     let msg = e.msg
-    let prompt = msg.trim()
+    let prompt = undefined === msg  ? "" : msg.trim()
     let forcePictureMode = false
     if (this.toggleMode === 'at') {
       if (!msg || e.msg?.startsWith('#')) {
