@@ -54,6 +54,7 @@ import { QwenApi } from '../utils/alibaba/qwen-api.js'
 import { BingAIClient } from '../client/CopilotAIClient.js'
 import Keyv from 'keyv'
 import crypto from 'crypto'
+import {SendRPSTool} from "../utils/tools/SendRPSTool.js";
 
 const roleMap = {
   owner: 'group owner',
@@ -528,6 +529,8 @@ class Core {
           new SendVideoTool(),
           new SearchVideoTool(),
           new SendAvatarTool(),
+          new SendDiceTool(),
+          new SendRPSTool(),
           new SerpImageTool(),
           new SearchMusicTool(),
           new SendMusicTool(),
