@@ -42,7 +42,7 @@ export class SendPictureTool extends AbstractTool {
       groupList = e.bot.gl
     }
     try {
-      if (groupList.get(target)) {
+      if (groupList.includes(target)) {
         let group = await e.bot.pickGroup(target)
         await group.sendMsg(pictures)
         return 'picture has been sent to group' + target

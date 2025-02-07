@@ -26,7 +26,7 @@ export class SendRPSTool extends AbstractTool {
     } catch (err) {
       groupList = e.bot.gl
     }
-    if (groupList.get(target)) {
+    if (groupList.includes(target)) {
       let group = await e.bot.pickGroup(target, true)
       await group.sendMsg(segment.rps(num))
     } else {

@@ -31,7 +31,7 @@ export class SendDiceTool extends AbstractTool {
       groupList = e.bot.gl
     }
     num = isNaN(num) || !num ? 1 : num > 5 ? 5 : num
-    if (groupList.get(target)) {
+    if (groupList.includes(target)) {
       let group = await e.bot.pickGroup(target, true)
       for (let i = 0; i < num; i++) {
         await group.sendMsg(segment.dice())

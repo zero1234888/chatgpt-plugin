@@ -32,7 +32,7 @@ export class SendMessageToSpecificGroupOrUserTool extends AbstractTool {
       groupList = e.bot.gl
     }
     try {
-      if (groupList.get(target)) {
+      if (groupList.includes(target)) {
         let group = await e.bot.pickGroup(target)
         await group.sendMsg(await convertFaces(msg, true, e))
         return 'msg has been sent to group' + target
