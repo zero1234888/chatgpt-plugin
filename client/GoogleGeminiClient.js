@@ -34,23 +34,26 @@ export class GoogleGeminiClient extends BaseClient {
   }
 
   async getHistory (parentMessageId, userId = this.userId, opt = {}) {
+    let maxHistroy = 50;
     const history = []
     let cursor = parentMessageId
     if (!cursor) {
       return history
     }
+    let count = 0;
     do {
       let parentMessage = await this.getMessageById(cursor)
       if (!parentMessage) {
         break
       } else {
         history.push(parentMessage)
+        count++
         cursor = parentMessage.parentMessageId
         if (!cursor) {
           break
         }
       }
-    } while (true)
+    } while (count < maxHistroy)
     return history.reverse()
   }
 
