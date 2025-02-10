@@ -529,10 +529,10 @@ class Core {
           new SearchVideoTool(),
           new SendAvatarTool(),
           new SerpImageTool(),
-          new SearchMusicTool(),
-          new SendMusicTool(),
-          new SendAudioMessageTool(),
-          new APTool(),
+          // new SearchMusicTool(),
+          // new SendMusicTool(),
+          // new SendAudioMessageTool(),
+          // new APTool(),
           new SendMessageToSpecificGroupOrUserTool()
           // new QueryGenshinTool()
         ]
@@ -783,24 +783,24 @@ async function collectTools (e) {
     new WebsiteTool(),
     new JinyanTool(),
     new KickOutTool(),
-    new WeatherTool(),
+    // new WeatherTool(),
     new SendPictureTool(),
     new SendVideoTool(),
     new ImageCaptionTool(),
     new SearchVideoTool(),
     new SendAvatarTool(),
     new SerpImageTool(),
-    new SearchMusicTool(),
-    new SendMusicTool(),
+    // new SearchMusicTool(),
+    // new SendMusicTool(),
     new SerpIkechan8370Tool(),
     new SerpTool(),
-    new SendAudioMessageTool(),
+    // new SendAudioMessageTool(),
     new ProcessPictureTool(),
-    new APTool(),
+    // new APTool(),
     new HandleMessageMsgTool(),
     new QueryUserinfoTool(),
-    new EliMusicTool(),
-    new EliMovieTool(),
+    // new EliMusicTool(),
+    // new EliMovieTool(),
     new SendMessageToSpecificGroupOrUserTool(),
     // new SendDiceTool(),
     // new QueryGenshinTool(),
@@ -809,7 +809,7 @@ async function collectTools (e) {
   // todo 3.0再重构tool的插拔和管理
   let tools = [
     new SendAvatarTool(),
-    new SendDiceTool(),
+    // new SendDiceTool(),
     new SendMessageToSpecificGroupOrUserTool(),
     // new EditCardTool(),
     // new s(),
@@ -818,21 +818,21 @@ async function collectTools (e) {
     new WebsiteTool(),
     // new JinyanTool(),
     // new KickOutTool(),
-    new WeatherTool(),
+    // new WeatherTool(),
     new SendPictureTool(),
-    new SendAudioMessageTool(),
-    new APTool(),
+    // new SendAudioMessageTool(),
+    // new APTool(),
     // new HandleMessageMsgTool(),
     serpTool,
     new QueryUserinfoTool()
   ]
-  try {
-    await import('../../avocado-plugin/apps/avocado.js')
-    tools.push(...[new EliMusicTool(), new EliMovieTool()])
-  } catch (err) {
-    tools.push(...[new SendMusicTool(), new SearchMusicTool()])
-    // logger.debug(logger.green('【ChatGPT-Plugin】插件avocado-plugin未安装') + '，安装后可查看最近热映电影与体验可玩性更高的点歌工具。\n可前往 https://github.com/Qz-Sean/avocado-plugin 获取')
-  }
+  // try {
+  //   await import('../../avocado-plugin/apps/avocado.js')
+  //   tools.push(...[new EliMusicTool(), new EliMovieTool()])
+  // } catch (err) {
+  //   tools.push(...[new SendMusicTool(), new SearchMusicTool()])
+  //   logger.debug(logger.green('【ChatGPT-Plugin】插件avocado-plugin未安装') + '，安装后可查看最近热映电影与体验可玩性更高的点歌工具。\n可前往 https://github.com/Qz-Sean/avocado-plugin 获取')
+  // }
   let systemAddition = ''
   if (e.isGroup) {
     let botInfo = await e.bot?.pickMember?.(e.group_id, getUin(e), true) || await e.bot?.getGroupMemberInfo?.(e.group_id, getUin(e), true)
