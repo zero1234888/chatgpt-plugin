@@ -522,7 +522,7 @@ class Core {
          * @type {AbstractTool[]}
          */
         let tools = [
-          new QueryStarRailTool(),
+          // new QueryStarRailTool(),
           new WebsiteTool(),
           new SendPictureTool(),
           new SendVideoTool(),
@@ -534,7 +534,7 @@ class Core {
           new SendAudioMessageTool(),
           new APTool(),
           new SendMessageToSpecificGroupOrUserTool(),
-          new QueryGenshinTool()
+          // new QueryGenshinTool()
         ]
         if (Config.amapKey) {
           tools.push(new WeatherTool())
@@ -779,7 +779,7 @@ async function collectTools (e) {
   }
   let fullTools = [
     new EditCardTool(),
-    new QueryStarRailTool(),
+    // new QueryStarRailTool(),
     new WebsiteTool(),
     new JinyanTool(),
     new KickOutTool(),
@@ -802,8 +802,8 @@ async function collectTools (e) {
     new EliMusicTool(),
     new EliMovieTool(),
     new SendMessageToSpecificGroupOrUserTool(),
-    new SendDiceTool(),
-    new QueryGenshinTool(),
+    // new SendDiceTool(),
+    // new QueryGenshinTool(),
     new SetTitleTool()
   ]
   // todo 3.0再重构tool的插拔和管理
@@ -812,8 +812,8 @@ async function collectTools (e) {
     new SendDiceTool(),
     new SendMessageToSpecificGroupOrUserTool(),
     // new EditCardTool(),
-    new QueryStarRailTool(),
-    new QueryGenshinTool(),
+    // new s(),
+    // new QueryGenshinTool(),
     new ProcessPictureTool(),
     new WebsiteTool(),
     // new JinyanTool(),
