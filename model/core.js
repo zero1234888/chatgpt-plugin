@@ -533,7 +533,7 @@ class Core {
           new SendMusicTool(),
           new SendAudioMessageTool(),
           new APTool(),
-          new SendMessageToSpecificGroupOrUserTool(),
+          new SendMessageToSpecificGroupOrUserTool()
           // new QueryGenshinTool()
         ]
         if (Config.amapKey) {
