@@ -24,6 +24,7 @@ import { supportConfigurations as azureRoleList } from '../utils/tts/microsoft-a
 import fetch from 'node-fetch'
 import { newFetch } from '../utils/proxy.js'
 import { createServer, runServer, stopServer } from '../server/index.js'
+import { BingAIClient } from '../client/CopilotAIClient.js'
 
 export class ChatgptManagement extends plugin {
   constructor (e) {
@@ -364,6 +365,15 @@ export class ChatgptManagement extends plugin {
         }
       ]
     })
+    this.task = [
+      {
+        cron: '0 0 */2 * * ?',
+        // cron: '*/1 * * * *',
+        name: 'refreshBingAi',
+        fnc: this.refreshBingAi,
+        log: false
+      }
+    ]
     this.reply = async (msg, quote, data) => {
       if (!Config.enableMd) {
         return e.reply(msg, quote, data)
@@ -1800,12 +1810,24 @@ azure语音：Azure 语音是微软 Azure 平台提供的一项语音服务，�
     let config = []
     config.push(`当前模式：${use}`)
     config.push(`\n当前API模型：${Config.model}`)
+    config.push(`\n当前开启API流式输出：${Config.apiStream}`)
+    config.push(`\n当前开启BYM模式：${Config.enableBYM}`)
+    config.push(`\n当前BYM模式：${Config.bymMode}`)
+    config.push(`\n当前智能模式：${Config.smartMode}`)
     if (e.isPrivate) {
       config.push(`\n当前APIKey：${Config.apiKey}`)
       config.push(`\n当前API反代：${Config.openAiBaseUrl}`)
       config.push(`\n当前必应反代：${Config.sydneyReverseProxy}`)
+      config.push(`\n当前Gemini API Key：${Config.geminiKey}`)
+      config.push(`\n当前Gemini反代：${Config.geminiBaseUrl}`)
+      config.push(`\n当前Claude API 反代：${Config.claudeApiBaseUrl}`)
+      config.push(`\n当前Claude API Key：${Config.claudeApiKey}`)
+      config.push(`\n当前开启工具箱：${Config.enableToolbox}`)
     }
     config.push(`\n当前星火模型：${Config.xhmode}`)
+    config.push(`\n当前Claude模型：${Config.claudeApiModel}`)
+    config.push(`\n当前Gemini模型：${Config.geminiModel}`)
+    config.push(`\n当前Qwen模型：${Config.qwenModel}`)
     this.reply(config)
   }
 
@@ -1847,7 +1869,6 @@ azure语音：Azure 语音是微软 Azure 平台提供的一项语音服务，�
       await this.reply('好的，已经关闭工具箱')
     }
   }
-
 
   async switchBYM (e) {
     if (e.msg.includes('开启')) {
@@ -1916,4 +1937,15 @@ azure语音：Azure 语音是微软 Azure 平台提供的一项语音服务，�
     await e.reply('操作成功')
   }
 
+  async refreshBingAi () {
+    if (Config.bingAiRefreshToken) {
+      let client = new BingAIClient(Config.bingAiToken, Config.sydneyReverseProxy, Config.debug, Config._2captchaKey, Config.bingAiClientId, Config.bingAiScope, Config.bingAiRefreshToken, Config.bingAiOid, Config.bingReasoning)
+      let json = await client.doRefreshToken()
+      if (json.refresh_token) {
+        logger.mark('Bing AI Token Refreshed')
+      } else {
+        logger.mark('Failed to refresh Bing AI Token')
+      }
+    }
+  }
 }
