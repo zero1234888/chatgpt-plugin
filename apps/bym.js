@@ -3,7 +3,8 @@ import { getImg, getUin} from '../utils/common.js'
 import { getChatHistoryGroup } from '../utils/chat.js'
 import { convertFaces } from '../utils/face.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
-import core from '../model/core.js'
+import core, {roleMap} from '../model/core.js'
+import {formatDate} from '../utils/common.js'
 
 export class bym extends plugin {
   constructor () {
@@ -62,13 +63,13 @@ export class bym extends plugin {
         '以下是新增的聊天记录:' + chats
           .map(chat => {
             let sender = chat.sender || chat || {}
-            return `${sender.card || sender.nickname}(${sender.user_id}) ：${chat.raw_message}`
+            return `【${sender.card || sender.nickname}】(qq：${sender.user_id}, ${roleMap[sender.role] || 'normal user'}，${sender.area ? 'from ' + sender.area + ', ' : ''} ${sender.age} years old, 群头衔：${sender.title}, gender: ${sender.sex}, time：${formatDate(new Date(chat.time * 1000))} 说：${chat.raw_message}`
           })
           .join('\n') +
         `\n你的回复应该尽可能简练，像人类一样随意，不要附加任何奇怪的东西，如聊天记录的格式（比如${Config.assistantLabel}：），禁止重复聊天记录。`
 
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
-        enableSmart: true,
+        enableSmart: Config.smartMode,
         system: {
           api: system,
           qwen: system,

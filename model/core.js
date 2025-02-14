@@ -55,7 +55,7 @@ import { BingAIClient } from '../client/CopilotAIClient.js'
 import Keyv from 'keyv'
 import crypto from 'crypto'
 
-const roleMap = {
+export const roleMap = {
   owner: 'group owner',
   admin: 'group administrator'
 }
