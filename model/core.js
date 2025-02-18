@@ -29,7 +29,7 @@ import { SendAvatarTool } from '../utils/tools/SendAvatarTool.js'
 import { SerpImageTool } from '../utils/tools/SearchImageTool.js'
 import { SearchMusicTool } from '../utils/tools/SearchMusicTool.js'
 import { SendMusicTool } from '../utils/tools/SendMusicTool.js'
-import { SendAudioMessageTool } from '../utils/tools/SendAudioMessageTool.js'
+// import { SendAudioMessageTool } from '../utils/tools/SendAudioMessageTool.js'
 import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessageToSpecificGroupOrUserTool.js'
 import { QueryGenshinTool } from '../utils/tools/QueryGenshinTool.js'
 import { WeatherTool } from '../utils/tools/WeatherTool.js'
@@ -42,11 +42,11 @@ import { SerpIkechan8370Tool } from '../utils/tools/SerpIkechan8370Tool.js'
 import { SerpTool } from '../utils/tools/SerpTool.js'
 import common from '../../../lib/common/common.js'
 import { SendDiceTool } from '../utils/tools/SendDiceTool.js'
-import { EliMovieTool } from '../utils/tools/EliMovieTool.js'
-import { EliMusicTool } from '../utils/tools/EliMusicTool.js'
+// import { EliMovieTool } from '../utils/tools/EliMovieTool.js'
+// import { EliMusicTool } from '../utils/tools/EliMusicTool.js'
 import { HandleMessageMsgTool } from '../utils/tools/HandleMessageMsgTool.js'
 import { ProcessPictureTool } from '../utils/tools/ProcessPictureTool.js'
-import { ImageCaptionTool } from '../utils/tools/ImageCaptionTool.js'
+// import { ImageCaptionTool } from '../utils/tools/ImageCaptionTool.js'
 import { ChatGPTAPI } from '../utils/openai/chatgpt-api.js'
 import { newFetch } from '../utils/proxy.js'
 import { ChatGLM4Client } from '../client/ChatGLM4Client.js'
@@ -54,6 +54,7 @@ import { QwenApi } from '../utils/alibaba/qwen-api.js'
 import { BingAIClient } from '../client/CopilotAIClient.js'
 import Keyv from 'keyv'
 import crypto from 'crypto'
+import {GithubAPITool} from '../utils/tools/GithubTool.js'
 
 export const roleMap = {
   owner: 'group owner',
@@ -62,8 +63,8 @@ export const roleMap = {
 
 const defaultPropmtPrefix = ', a large language model trained by OpenAI. You answer as concisely as possible for each response (e.g. don’t be verbose). It is very important that you answer as concisely as possible, so please remember this. If you are generating a list, do not have too many items. Keep the number of items short.'
 
-async function handleSystem (e, system) {
-  if (Config.enableGroupContext) {
+async function handleSystem (e, system, settings) {
+  if (settings.enableGroupContext) {
     try {
       let opt = {}
       opt.groupId = e.group_id
@@ -117,7 +118,9 @@ class Core {
       xh: Config.xhPrompt
     },
     settings: {
-      replyPureTextCallback: undefined
+      replyPureTextCallback: undefined,
+      enableGroupContext: Config.enableGroupContext,
+      forceTool: false
     }
   }) {
     if (!conversation) {
@@ -142,7 +145,9 @@ class Core {
         messages: [],
         createdAt: Date.now()
       }
-      logger.info(JSON.stringify(conversations))
+      if (Config.debug) {
+        logger.debug(JSON.stringify(conversations))
+      }
       const previousCachedMessages = SydneyAIClient.getMessagesForConversation(conversations.messages, conversation.parentMessageId)
         .map((message) => {
           return {
@@ -151,14 +156,14 @@ class Core {
           }
         })
       let system = opt.system.bing
-      if (Config.enableGroupContext && e.isGroup) {
+      if (opt.settings.enableGroupContext && e.isGroup) {
         let chats = await getChatHistoryGroup(e, Config.groupContextLength)
         const namePlaceholder = '[name]'
         const defaultBotName = 'Copilot'
         const groupContextTip = Config.groupContextTip
         let botName = e.isGroup ? (e.group.pickMember(getUin(e)).card || e.group.pickMember(getUin(e)).nickname) : e.bot.nickname
         system = system.replaceAll(namePlaceholder, botName || defaultBotName) +
-          ((Config.enableGroupContext && e.group_id) ? groupContextTip : '')
+          ((opt.settings.enableGroupContext && e.group_id) ? groupContextTip : '')
         system += 'Attention, you are currently chatting in a qq group, then one who asks you now is' + `${e.sender.card || e.sender.nickname}(${e.sender.user_id}).`
         system += `the group name is ${e.group.name || e.group_name}, group id is ${e.group_id}.`
         system += `Your nickname is ${botName} in the group,`
@@ -425,7 +430,7 @@ class Core {
           option.completionParams = {}
         }
         promptAddition && (prompt += promptAddition)
-        option.systemMessage = await handleSystem(e, opts.systemMessage)
+        option.systemMessage = await handleSystem(e, opts.systemMessage, opt.settings)
         if (Config.enableChatSuno) {
           option.systemMessage += '如果我要求你生成音乐或写歌，你需要回复适合Suno生成音乐的信息。请使用Verse、Chorus、Bridge、Outro和End等关键字对歌词进行分段，如[Verse 1]。音乐信息需要使用markdown包裹的JSON格式回复给我，结构为```json{"option": "Suno", "tags": "style", "title": "title of the song", "lyrics": "lyrics"}```。'
         }
@@ -518,60 +523,14 @@ class Core {
         option.image = base64Image.toString('base64')
       }
       if (opt.enableSmart) {
-        /**
-         * @type {AbstractTool[]}
-         */
-        let tools = [
-          // new QueryStarRailTool(),
-          new WebsiteTool(),
-          new SendPictureTool(),
-          new SendVideoTool(),
-          new SearchVideoTool(),
-          new SendAvatarTool(),
-          new SerpImageTool(),
-          // new SearchMusicTool(),
-          // new SendMusicTool(),
-          // new SendAudioMessageTool(),
-          // new APTool(),
-          new SendMessageToSpecificGroupOrUserTool()
-          // new QueryGenshinTool()
-        ]
-        if (Config.amapKey) {
-          tools.push(new WeatherTool())
-        }
-        if (e.isGroup) {
-          tools.push(new QueryUserinfoTool())
-          if (e.group.is_admin || e.group.is_owner) {
-            tools.push(new EditCardTool())
-            tools.push(new JinyanTool())
-            tools.push(new KickOutTool())
-          }
-          if (e.group.is_owner) {
-            tools.push(new SetTitleTool())
-          }
-        }
-        switch (Config.serpSource) {
-          case 'ikechan8370': {
-            tools.push(new SerpIkechan8370Tool())
-            break
-          }
-          case 'azure': {
-            if (!Config.azSerpKey) {
-              logger.warn('未配置bing搜索密钥，转为使用ikechan8370搜索源')
-              tools.push(new SerpIkechan8370Tool())
-            } else {
-              tools.push(new SerpTool())
-            }
-            break
-          }
-          default: {
-            tools.push(new SerpIkechan8370Tool())
-          }
-        }
+        const {
+          funcMap
+        } = await collectTools(e)
+        let tools = Object.keys(funcMap).map(k => funcMap[k].tool)
         client.addTools(tools)
       }
       let system = opt.system.gemini
-      if (Config.enableGroupContext && e.isGroup) {
+      if (opt.settings.enableGroupContext && e.isGroup) {
         let chats = await getChatHistoryGroup(e, Config.groupContextLength)
         const namePlaceholder = '[name]'
         const defaultBotName = 'GeminiPro'
@@ -581,13 +540,13 @@ class Core {
           prompt = "@"+botName
         }
         system = system.replaceAll(namePlaceholder, botName || defaultBotName) +
-          ((Config.enableGroupContext && e.group_id) ? groupContextTip : '')
+            ((Config.enableGroupContext && e.group_id) ? groupContextTip : '')
 
         system += `你的名字是“${botName}”，你在一个qq群里，群号是${e.group_id},当前和你说话的人群名片是${e.sender.card || e.sender.nickname}, qq号是${e.sender.user_id}, 请你结合用户的发言，本次聊天记录，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨，不明白的事尽量不要追问, 不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。` +
             '以下是聊天记录:' + chats
                 .map(chat => {
                   let sender = chat.sender || chat || {}
-                  return `${sender.card || sender.nickname}(${sender.user_id}) ：${chat.raw_message}`
+                  return `【${sender.card || sender.nickname}】(qq:${sender.user_id}, time：${formatDate(new Date(chat.time * 1000))}, messageId: ${chat.message_id}))说：${chat.raw_message}`
                 })
                 .join('\n') +
             `\n你的回复应该尽可能简练，像人类一样随意，不要附加任何奇怪的东西，如聊天记录的格式（比如${Config.assistantLabel}：），禁止重复聊天记录。`
@@ -603,6 +562,7 @@ class Core {
           await e.reply(msg, true)
         }
       })
+      option.toolMode = (opt.settings.forceTool || Config.geminiForceToolKeywords?.find(k => prompt.includes(k))) ? 'ANY' : 'AUTO'
       return await client.sendMessage(prompt, option)
     } else if (use === 'chatglm4') {
       const client = new ChatGLM4Client({
@@ -624,7 +584,7 @@ class Core {
         Current date: ${currentDate}`
       let maxModelTokens = getMaxModelTokens(completionParams.model)
       // let system = promptPrefix
-      let system = await handleSystem(e, promptPrefix, maxModelTokens)
+      let system = await handleSystem(e, promptPrefix, opt.settings)
       if (Config.enableChatSuno) {
         system += 'If I ask you to generate music or write songs, you need to reply with information suitable for Suno to generate music. Please use keywords such as Verse, Chorus, Bridge, Outro, and End to segment the lyrics, such as [Verse 1], The returned song information needs to be wrapped in JSON format and sent to me in Markdown format. The message structure is ` ` JSON {"option": "Suno", "tags": "style", "title": "title of The Song", "lyrics": "lyrics"} `.'
       }
@@ -790,7 +750,7 @@ async function collectTools (e) {
     // new WeatherTool(),
     new SendPictureTool(),
     new SendVideoTool(),
-    new ImageCaptionTool(),
+    // new ImageCaptionTool(),
     new SearchVideoTool(),
     new SendAvatarTool(),
     new SerpImageTool(),
@@ -808,16 +768,19 @@ async function collectTools (e) {
     new SendMessageToSpecificGroupOrUserTool(),
     // new SendDiceTool(),
     // new QueryGenshinTool(),
-    new SetTitleTool()
+    new SetTitleTool(),
+    new GithubAPITool()
   ]
   // todo 3.0再重构tool的插拔和管理
-  let tools = [
+  let /** @type{AbstractTool[]} **/ tools = [
     new SendAvatarTool(),
     // new SendDiceTool(),
     new SendMessageToSpecificGroupOrUserTool(),
     // new EditCardTool(),
-    // new s(),
+    // new QueryStarRailTool(),
     // new QueryGenshinTool(),
+    new SendMusicTool(),
+    new SearchMusicTool(),
     new ProcessPictureTool(),
     new WebsiteTool(),
     // new JinyanTool(),
@@ -825,18 +788,11 @@ async function collectTools (e) {
     // new WeatherTool(),
     new SendPictureTool(),
     // new SendAudioMessageTool(),
-    // new APTool(),
     // new HandleMessageMsgTool(),
     serpTool,
-    new QueryUserinfoTool()
+    new QueryUserinfoTool(),
+    new GithubAPITool()
   ]
-  // try {
-  //   await import('../../avocado-plugin/apps/avocado.js')
-  //   tools.push(...[new EliMusicTool(), new EliMovieTool()])
-  // } catch (err) {
-  //   tools.push(...[new SendMusicTool(), new SearchMusicTool()])
-  //   logger.debug(logger.green('【ChatGPT-Plugin】插件avocado-plugin未安装') + '，安装后可查看最近热映电影与体验可玩性更高的点歌工具。\n可前往 https://github.com/Qz-Sean/avocado-plugin 获取')
-  // }
   let systemAddition = ''
   if (e.isGroup) {
     let botInfo = await e.bot?.pickMember?.(e.group_id, getUin(e), true) || await e.bot?.getGroupMemberInfo?.(e.group_id, getUin(e), true)
@@ -855,8 +811,8 @@ async function collectTools (e) {
   let promptAddition = ''
   let img = await getImg(e)
   if (img?.length > 0 && Config.extraUrl) {
-    tools.push(new ImageCaptionTool())
-    tools.push(new ProcessPictureTool())
+    // tools.push(new ImageCaptionTool())
+    // tools.push(new ProcessPictureTool())
     promptAddition += `\nthe url of the picture(s) above: ${img.join(', ')}`
   } else {
     tools.push(new SerpImageTool())
@@ -868,13 +824,15 @@ async function collectTools (e) {
   tools.forEach(tool => {
     funcMap[tool.name] = {
       exec: tool.func,
-      function: tool.function()
+      function: tool.function(),
+      tool
     }
   })
   fullTools.forEach(tool => {
     fullFuncMap[tool.name] = {
       exec: tool.func,
-      function: tool.function()
+      function: tool.function(),
+      tool
     }
   })
   return {
@@ -882,59 +840,6 @@ async function collectTools (e) {
     fullFuncMap,
     systemAddition,
     promptAddition
-  }
-}
-
-async function getAvailableBingToken (conversation, throttled = []) {
-  let allThrottled = false
-  if (!await redis.get('CHATGPT:BING_TOKENS')) {
-    return {
-      bingToken: null,
-      allThrottled
-    }
-    // throw new Error('未绑定Bing Cookie，请使用#chatgpt设置必应token命令绑定Bing Cookie')
-  }
-
-  let bingToken = ''
-  let bingTokens = JSON.parse(await redis.get('CHATGPT:BING_TOKENS'))
-  const normal = bingTokens.filter(element => element.State === '正常')
-  const restricted = bingTokens.filter(element => element.State === '受限')
-
-  // 判断受限的token是否已经可以解除
-  for (const restrictedToken of restricted) {
-    const now = new Date()
-    const tk = new Date(restrictedToken.DisactivationTime)
-    if (tk <= now) {
-      const index = bingTokens.findIndex(element => element.Token === restrictedToken.Token)
-      bingTokens[index].Usage = 0
-      bingTokens[index].State = '正常'
-    }
-  }
-  if (normal.length > 0) {
-    const minElement = normal.reduce((min, current) => {
-      return current.Usage < min.Usage ? current : min
-    })
-    bingToken = minElement.Token
-  } else if (restricted.length > 0 && restricted.some(x => throttled.includes(x.Token))) {
-    allThrottled = true
-    const minElement = restricted.reduce((min, current) => {
-      return current.Usage < min.Usage ? current : min
-    })
-    bingToken = minElement.Token
-  } else {
-    // throw new Error('全部Token均已失效，暂时无法使用')
-    return {
-      bingToken: null,
-      allThrottled
-    }
-  }
-  // 记录使用情况
-  const index = bingTokens.findIndex(element => element.Token === bingToken)
-  bingTokens[index].Usage += 1
-  await redis.set('CHATGPT:BING_TOKENS', JSON.stringify(bingTokens))
-  return {
-    bingToken,
-    allThrottled
   }
 }
 

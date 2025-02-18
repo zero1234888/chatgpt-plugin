@@ -3,8 +3,8 @@ import { getImg, getUin} from '../utils/common.js'
 import { getChatHistoryGroup } from '../utils/chat.js'
 import { convertFaces } from '../utils/face.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
-import core, {roleMap} from '../model/core.js'
-import {formatDate} from '../utils/common.js'
+import core, { roleMap } from '../model/core.js'
+import { formatDate } from '../utils/common.js'
 
 export class bym extends plugin {
   constructor () {
@@ -63,12 +63,6 @@ export class bym extends plugin {
       let botName = e.isGroup ? (e.group.pickMember(getUin(e)).card || e.group.pickMember(getUin(e)).nickname) : e.bot.nickname
       let system = `你的名字是“${botName}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言，本次聊天记录，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨,不明白的事尽量不要追问,不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。` +
         candidate +
-        '以下是聊天记录:' + chats
-          .map(chat => {
-            let sender = chat.sender || chat || {}
-            return `【${sender.card || sender.nickname}】(qq：${sender.user_id}, ${roleMap[sender.role] || 'normal user'}，${sender.area ? 'from ' + sender.area + ', ' : ''} ${sender.age} years old, 群头衔：${sender.title}, gender: ${sender.sex}, time：${formatDate(new Date(chat.time * 1000))} 说：${chat.raw_message}`
-          })
-          .join('\n') +
         `\n你的回复应该尽可能简练，像人类一样随意，不要附加任何奇怪的东西，如聊天记录的格式（比如${Config.assistantLabel}：），禁止重复聊天记录。`
 
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
@@ -86,7 +80,9 @@ export class bym extends plugin {
           replyPureTextCallback: msg => {
             msg = filterResponseChunk(msg)
             msg && e.reply(msg)
-          }
+          },
+          // 强制打开上下文，不然伪人笨死了
+          enableGroupContext: true
         }
       })
       // let rsp = await client.sendMessage(e.msg, opt)

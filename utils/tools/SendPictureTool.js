@@ -1,4 +1,6 @@
 import { AbstractTool } from './AbstractTool.js'
+import {getMasterQQ} from '../common.js'
+import {Config} from '../config.js'
 
 export class SendPictureTool extends AbstractTool {
   name = 'sendPicture'
@@ -18,7 +20,7 @@ export class SendPictureTool extends AbstractTool {
   }
 
   func = async function (opt, e) {
-    let { urlOfPicture, targetGroupIdOrQQNumber } = opt
+    let { urlOfPicture, targetGroupIdOrQQNumber, sender } = opt
     if (typeof urlOfPicture === 'object') {
       urlOfPicture = urlOfPicture.join(' ')
     }
@@ -41,18 +43,36 @@ export class SendPictureTool extends AbstractTool {
     } catch (err) {
       groupList = e.bot.gl
     }
+    let errs = []
     try {
       if (groupList.includes(target)) {
         let group = await e.bot.pickGroup(target)
-        await group.sendMsg(pictures)
-        return 'picture has been sent to group' + target
+        for (let pic of pictures) {
+          try {
+            await group.sendMsg(pic)
+          } catch (err) {
+            errs.push(pic)
+          }
+        }
+        // await group.sendMsg(pictures)
+        return 'picture has been sent to group' + target + (errs.length > 0 ? `, but some pictures failed to send (${errs.join('、')})` : '')
       } else {
+        let masters = (await getMasterQQ())
+        if (!Config.enableToolPrivateSend && !masters.includes(sender + '')) {
+          return 'you are not allowed to pm other group members'
+        }
         let user = e.bot.pickUser(target)
         if (e.group_id) {
           user = user.asMember(e.group_id)
         }
-        await user.sendMsg(pictures)
-        return 'picture has been sent to user' + target
+        for (let pic of pictures) {
+          try {
+            await user.sendMsg(pic)
+          } catch (err) {
+            errs.push(pic.url)
+          }
+        }
+        return 'picture has been sent to user' + target + (errs.length > 0 ? `, but some pictures failed to send (${errs.join('、')})` : '')
       }
     } catch (err) {
       return `failed to send pictures, error: ${JSON.stringify(err)}`
