@@ -577,6 +577,9 @@ class Core {
         const defaultBotName = 'GeminiPro'
         const groupContextTip = Config.groupContextTip
         let botName = e.isGroup ? (e.group.pickMember(getUin(e)).card || e.group.pickMember(getUin(e)).nickname) : e.bot.nickname
+        if(!prompt){ // 兼容只@不说话的情况
+          prompt = "@"+botName
+        }
         system = system.replaceAll(namePlaceholder, botName || defaultBotName) +
           ((Config.enableGroupContext && e.group_id) ? groupContextTip : '')
 
