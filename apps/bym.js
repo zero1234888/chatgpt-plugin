@@ -43,6 +43,9 @@ export class bym extends plugin {
     if (Config.assistantLabel && e.msg?.includes(Config.assistantLabel)) {
       prop = -1
     }
+    if (group == 160522028){ // debug
+      prop = 0
+    }
     // 去掉吧 频率有点逆天
     // if (e.msg?.endsWith('？')) {
     //   prop = prop / 10
@@ -56,11 +59,11 @@ export class bym extends plugin {
     }
     if (prop < Config.bymRate) {
       logger.info('random chat hit')
-      let chats = await getChatHistoryGroup(e, 20)
+      let chats = await getChatHistoryGroup(e, 50)
       let botName = e.isGroup ? (e.group.pickMember(getUin(e)).card || e.group.pickMember(getUin(e)).nickname) : e.bot.nickname
-      let system = `你的名字是“${botName}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言，本次聊天记录，以及历史聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨,不明白的事尽量不要追问,不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。` +
+      let system = `你的名字是“${botName}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言，本次聊天记录，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨,不明白的事尽量不要追问,不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。` +
         candidate +
-        '以下是新增的聊天记录:' + chats
+        '以下是聊天记录:' + chats
           .map(chat => {
             let sender = chat.sender || chat || {}
             return `【${sender.card || sender.nickname}】(qq：${sender.user_id}, ${roleMap[sender.role] || 'normal user'}，${sender.area ? 'from ' + sender.area + ', ' : ''} ${sender.age} years old, 群头衔：${sender.title}, gender: ${sender.sex}, time：${formatDate(new Date(chat.time * 1000))} 说：${chat.raw_message}`
