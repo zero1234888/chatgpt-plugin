@@ -748,12 +748,12 @@ async function collectTools (e) {
     new JinyanTool(),
     new KickOutTool(),
     // new WeatherTool(),
-    new SendPictureTool(),
-    new SendVideoTool(),
+    // new SendPictureTool(),
+    // new SendVideoTool(),
     // new ImageCaptionTool(),
-    new SearchVideoTool(),
+    // new SearchVideoTool(),
     new SendAvatarTool(),
-    new SerpImageTool(),
+    // new SerpImageTool(),
     // new SearchMusicTool(),
     // new SendMusicTool(),
     new SerpIkechan8370Tool(),
@@ -779,14 +779,14 @@ async function collectTools (e) {
     // new EditCardTool(),
     // new QueryStarRailTool(),
     // new QueryGenshinTool(),
-    new SendMusicTool(),
-    new SearchMusicTool(),
+    // new SendMusicTool(),
+    // new SearchMusicTool(),
     new ProcessPictureTool(),
     new WebsiteTool(),
     // new JinyanTool(),
     // new KickOutTool(),
     // new WeatherTool(),
-    new SendPictureTool(),
+    // new SendPictureTool(),
     // new SendAudioMessageTool(),
     // new HandleMessageMsgTool(),
     serpTool,
@@ -815,9 +815,9 @@ async function collectTools (e) {
     // tools.push(new ProcessPictureTool())
     promptAddition += `\nthe url of the picture(s) above: ${img.join(', ')}`
   } else {
-    tools.push(new SerpImageTool())
-    tools.push(...[new SearchVideoTool(),
-      new SendVideoTool()])
+    // tools.push(new SerpImageTool())
+    // tools.push(...[new SearchVideoTool(),
+    //   new SendVideoTool()])
   }
   let funcMap = {}
   let fullFuncMap = {}
